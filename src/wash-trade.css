@@ -277,6 +277,35 @@
   }
 }
 
+.wti .limit-note {
+  margin: 14px 0 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+  background: var(--neutral-bg);
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.wti .limit-note strong,
+.wti .incomplete strong {
+  color: var(--text);
+}
+
+.wti .incomplete {
+  margin: 18px 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--serious);
+  background: var(--serious-bg);
+  color: var(--text-2);
+}
+
+.wti .incomplete p,
+.wti .error p {
+  margin: 0 0 8px;
+}
+
 .wti .error {
   margin-top: 32px;
   padding: 14px 16px;

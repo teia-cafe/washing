@@ -4,7 +4,8 @@
 // marketplace contract moves the token to the buyer and moves tez (or wXTZ,
 // wrapped tez) out to the seller, the creator's royalty and the platform. So:
 //
-//   1. every transfer of a token whose metadata lists the creator
+//   1. every transfer (mints included) of a token whose metadata lists the
+//      creator or minter, or a collaboration contract the creator shares in
 //   2. the operation each transfer happened in (block level, counter, hash)
 //   3. the tez and wXTZ that moved in those operations, fetched per batch of
 //      blocks and narrowed to the marketplace contracts and the wallets that
@@ -14,10 +15,10 @@
 // operation (buying a listing); otherwise it is what the marketplace paid out
 // (accepted offers and settled auctions, where the money was held in advance).
 //
-// Checked against objkt.com's own sales index for a wallet with ~6,000 sales of
-// its works: every sale of a token with creator metadata was found, and the
-// price matched on 99.9%. Collections whose tokens do not record a creator
-// (fxhash generative tokens, some Rarible mints) are not covered.
+// Checked against objkt.com's own sales index (see docs/METHODOLOGY.md).
+// Collections whose tokens record neither a creator nor a minter (fxhash
+// generative tokens, some Rarible mints) are not covered, nor are sales whose
+// proceeds stay inside the marketplace contract until withdrawn (Versum).
 //
 // A token transfer in an operation with no payment is not a sale; those are
 // returned as token moves (gifts, hand-backs, moves between own wallets).
@@ -57,6 +58,7 @@ interface RawOp {
   hash: string;
   sender: { address: string };
   initiator: { address: string } | null;
+  target?: { address: string } | null;
 }
 
 interface RawPayment {
@@ -109,35 +111,85 @@ export interface WorksActivity {
   moves: TokenMove[];
 }
 
+/** A filter for any of several values; TzKT wants `.in` to have at least two. */
+const anyOf = (field: string, values: string[]) => (values.length === 1 ? `${field}=${values[0]}` : `${field}.in=${values.join(",")}`);
+
+/**
+ * Collaboration (split) contracts the wallet shares in. Their works record the
+ * contract, not the collaborators, as the creator. A split contract pays each
+ * collaborator their share, so the candidates are the contracts that have paid
+ * this wallet, kept when some token names them as its creator.
+ */
+export async function collabContracts(wallet: string): Promise<string[]> {
+  const payers = await tzktAll<{ id: number; sender: { address: string } }>(
+    `operations/transactions?target=${wallet}&initiator.null=false&amount.gt=0&select=id,sender`,
+    10_000,
+    50_000,
+  );
+  const candidates = [...new Set(payers.map((p) => p.sender.address).filter(isContract))];
+  const found = new Set<string>();
+  for (const batch of chunk(candidates, 50)) {
+    const rows = await tzkt<unknown[]>(`tokens?${anyOf("metadata.creators.[*]", batch)}&select=metadata.creators&limit=10000`);
+    for (const creators of rows) if (Array.isArray(creators)) for (const c of creators) if (batch.includes(c)) found.add(c);
+  }
+  return [...found];
+}
+
 export async function worksActivity(creator: string, onProgress?: (p: Progress) => void): Promise<WorksActivity> {
   const step = (detail: string) => onProgress?.({ step: "Sales of the works", detail });
 
-  const count = await tzkt<number>(`tokens/transfers/count?token.metadata.creators.[*]=${creator}&from.null=false`);
+  // Works are tokens whose metadata names the wallet as a creator - or as the
+  // minter, which is how fxhash articles and a few other contracts record it -
+  // and works made through a collaboration contract the wallet shares in.
+  const collabs = await collabContracts(creator);
+  const filters = [`token.metadata.creators.[*]=${creator}`, `token.metadata.minter=${creator}`];
+  if (collabs.length) filters.push(anyOf("token.metadata.creators.[*]", collabs));
+  const counts = await Promise.all(filters.map((f) => tzkt<number>(`tokens/transfers/count?${f}`)));
+  const count = counts.reduce((a, b) => a + b, 0);
   if (count === 0) return { sales: [], moves: [] };
 
   step(`${count.toLocaleString("en-US")} token transfers`);
-  const rawMoves = await tzktAll<RawMove>(
-    `tokens/transfers?token.metadata.creators.[*]=${creator}&from.null=false` +
-      `&select=id,level,timestamp,from,to,amount,transactionId,token.contract.address as fa2,token.tokenId as tokenId,token.metadata.name as name,token.metadata.creators as creators`,
-    2000,
-    100_000,
+  const select =
+    "select=id,level,timestamp,from,to,amount,transactionId,token.contract.address as fa2,token.tokenId as tokenId,token.metadata.name as name,token.metadata.creators as creators";
+  const pulled = await Promise.all(
+    filters.map((f, i) => (counts[i] > 0 ? tzktAll<RawMove>(`tokens/transfers?${f}&${select}`, 2000, 100_000) : Promise.resolve([]))),
   );
+  // Mints are kept: a paid mint (an open edition) is a sale to the minting wallet.
+  const rawMoves = [...new Map(pulled.flat().map((m) => [m.id, m])).values()].sort((a, b) => a.id - b.id);
 
   // The operation each transfer happened in.
   const ids = [...new Set(rawMoves.map((m) => m.transactionId).filter((x): x is number => !!x))];
   let done = 0;
   const ops = (
     await mapLimit(chunk(ids, 100), 6, async (batch) => {
-      const rows = await tzkt<RawOp[]>(`operations/transactions?id.in=${batch.join(",")}&select=id,level,counter,hash,sender,initiator&limit=100`);
+      const rows = await tzkt<RawOp[]>(`operations/transactions?id.in=${batch.join(",")}&select=id,level,counter,hash,sender,initiator,target&limit=100`);
       step(`operations ${Math.min(++done * 100, ids.length).toLocaleString("en-US")} of ${ids.length.toLocaleString("en-US")}`);
       return rows;
     })
   ).flat();
   const opById = new Map(ops.map((o) => [o.id, o]));
 
-  // Operations run by a contract are the candidates for sales.
-  const marketOps = ops.filter((o) => isContract(o.sender.address));
-  const markets = [...new Set(marketOps.map((o) => o.sender.address))];
+  // The contract on the marketplace side of an operation, if it could be a sale:
+  // an internal call from a contract (marketplaces, escrows, wrappers), or a
+  // wallet's own call to a contract that minted the token or moved a token that
+  // was not the caller's (open editions sold by the token contract itself).
+  const marketSide = (o: RawOp, m: RawMove): string | null => {
+    if (isContract(o.sender.address)) return o.sender.address;
+    const target = o.target?.address;
+    if (!isContract(target)) return null;
+    return !m.from || m.from.address !== o.sender.address ? target! : null;
+  };
+  const marketOpsById = new Map<number, RawOp>();
+  const marketsSet = new Set<string>();
+  for (const m of rawMoves) {
+    const o = m.transactionId ? opById.get(m.transactionId) : undefined;
+    const side = o ? marketSide(o, m) : null;
+    if (!o || !side) continue;
+    marketOpsById.set(o.id, o);
+    marketsSet.add(side);
+  }
+  const marketOps = [...marketOpsById.values()];
+  const markets = [...marketsSet];
   const whoByLevel = new Map<number, Set<string>>();
   for (const o of marketOps) {
     const who = o.initiator?.address ?? o.sender.address;
@@ -228,44 +280,58 @@ export async function worksActivity(creator: string, onProgress?: (p: Progress) 
     if (p.quote?.usd) rateByLevel.set(p.level, p.quote.usd);
   }
 
-  // Group the token transfers by operation, then price each operation.
-  const groups = new Map<string, { op: RawOp; list: RawMove[] }>();
+  // Group the token transfers by operation. One operation can move a token
+  // through several contracts - out of escrow, through the marketplace, via a
+  // wrapper - so every contract that moved a token in it counts as the
+  // marketplace side.
+  const groups = new Map<string, { op: RawOp; contracts: Set<string>; list: RawMove[] }>();
   const moves: TokenMove[] = [];
   const saleKeys = new Set<string>();
   for (const m of rawMoves) {
     const op = m.transactionId ? opById.get(m.transactionId) : undefined;
-    if (op && isContract(op.sender.address) && m.to && !isContract(m.to.address)) {
-      const key = opKey(op.hash, op.counter);
-      const g = groups.get(key) ?? { op, list: [] };
-      g.list.push(m);
-      groups.set(key, g);
-    }
+    const side = op ? marketSide(op, m) : null;
+    if (!op || !side) continue;
+    const key = opKey(op.hash, op.counter);
+    const g = groups.get(key) ?? { op, contracts: new Set<string>(), list: [] };
+    g.contracts.add(side);
+    if (m.to && !isContract(m.to.address)) g.list.push(m);
+    groups.set(key, g);
   }
 
   const sales: Sale[] = [];
-  for (const [key, { op, list }] of groups) {
-    const market = op.sender.address;
+  for (const [key, { op, contracts, list }] of groups) {
+    if (list.length === 0) continue;
     const buyers = new Set(list.map((m) => m.to!.address));
     const paid = paidIn.get(key);
+    // Payments out of the marketplace side, leaving out money passed between its own contracts.
     const outs = (outflows.get(key) ?? []).filter(
-      (f) => f.from === market || (f.wxtz && buyers.has(f.from) && !buyers.has(f.to)),
+      (f) => (contracts.has(f.from) && !contracts.has(f.to)) || (f.wxtz && buyers.has(f.from) && !buyers.has(f.to)),
     );
-    const total = paid && buyers.has(paid.from) && paid.to === market ? paid.amount : outs.reduce((s, f) => s + f.amount, 0);
+    const total = paid && buyers.has(paid.from) && contracts.has(paid.to) ? paid.amount : outs.reduce((s, f) => s + f.amount, 0);
     if (total <= 0) continue;
     saleKeys.add(key);
 
-    // For escrowed listings the token comes from the contract; the seller is whoever was paid most.
+    // When the token came out of a contract (escrow) or was minted on purchase,
+    // the seller is whoever was paid the most - normally the artist, or the
+    // collaboration contract for a collab work (never a platform's fee contract).
     const payees = new Map<string, number>();
-    for (const f of outs) if (!isContract(f.to)) payees.set(f.to, (payees.get(f.to) ?? 0) + f.amount);
+    for (const f of outs) if (!isContract(f.to) || collabs.includes(f.to)) payees.set(f.to, (payees.get(f.to) ?? 0) + f.amount);
     const editions = list.reduce((s, m) => s + Number(m.amount), 0);
     const rate = rateByLevel.get(op.level) ?? null;
-    const kind = paid ? "listing" : "offer or auction";
+    const kind = !list.some((m) => m.from) ? "open edition" : paid ? "listing" : "offer or auction";
 
     for (const m of list) {
       const buyer = m.to!.address;
       let seller = m.from?.address ?? null;
-      if (!seller || isContract(seller)) {
-        seller = [...payees].filter(([a]) => a !== buyer).sort((a, b) => b[1] - a[1])[0]?.[0] ?? [...payees.keys()][0] ?? null;
+      if (!seller) {
+        // Minted on purchase: the artist is the seller when they were paid - even
+        // when they are also the buyer - never the platform's fee wallet.
+        const makers = Array.isArray(m.creators) ? m.creators : [creator];
+        seller = makers.find((c): c is string => typeof c === "string" && payees.has(c)) ?? null;
+      }
+      if (!seller || (isContract(seller) && !collabs.includes(seller))) {
+        // Out of escrow: whoever was paid the most other than the buyer.
+        seller = [...payees].filter(([a]) => a !== buyer).sort((a, b) => b[1] - a[1])[0]?.[0] ?? (payees.has(buyer) ? buyer : null);
       }
       if (!seller) continue;
       const amount = Math.max(1, Number(m.amount));

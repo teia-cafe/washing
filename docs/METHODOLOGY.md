@@ -34,8 +34,30 @@ directly.
 | .tez names | `/v1/domains` |
 | USD value at the time | the `quote=usd` rate TzKT attaches to each operation |
 
-Requests are rate-limited in the browser (at most 6 at once to TzKT) and retried
-with backoff when TzKT answers "too many requests".
+### Request limits
+
+Every query runs from the visitor's own browser to TzKT's free public API, which
+limits how many requests one visitor or network can make. A busy wallet takes a
+few hundred requests. The tool:
+
+- runs at most 6 requests to TzKT at once;
+- when TzKT pushes back ("too many requests", a gateway error, or a dropped
+  connection - a limit response often reaches the browser as a failed
+  connection), pauses every request, halves how many run at once for 30 seconds,
+  and retries with a growing backoff;
+- counts every query it had to give up on. While a lookup runs, it says when it
+  is being slowed down. A finished report where any query was given up on is
+  marked **may be incomplete**, in the page and in the copied report, and
+  suggests waiting a few minutes before running it again.
+
+Some queries are needed for the report to be fair, and a lookup stops rather than
+continue without them: the wallet itself, its transfers, and the account details
+that keep exchanges and services from being grouped as the same owner. Others are
+left out and reported: a linked wallet's own sales, wallet names, first-funding
+checks and past balances. Missing data mostly means fewer or looser patterns and
+links, but it can also change how wallets are grouped - a wallet that is not
+recognised as the same owner may appear in a different kind of pattern - which
+is why the report says so.
 
 ## 2. The wallet you look up
 
@@ -92,32 +114,56 @@ There is no "sale" record on Tezos. A sale is an operation in which a marketplac
 contract moves a token to the buyer and moves tez (or wXTZ, wrapped tez) out to
 the seller, the creator's royalty and the platform. For each wallet in the group:
 
-1. **Works.** Every transfer of a token whose metadata lists the wallet as a
-   creator (`token.metadata.creators`), excluding mints.
+1. **Works.** Every transfer, including mints, of a token whose metadata lists
+   the wallet as a creator (`token.metadata.creators`) or as the minter
+   (`token.metadata.minter`, used by fxhash articles and some other contracts),
+   and of works made through a **collaboration contract** the wallet shares in.
+   Collab works name the split contract, not the collaborators, as the creator.
+   A split contract pays each collaborator a share, so the candidates are the
+   contracts that have paid the wallet, kept when a token names them as creator.
 2. **Operations.** The operation each transfer happened in: block level, operation
-   counter, hash, and who started it.
-3. **Payments.** For operations run by a contract (a marketplace), the tez that
-   moved in them, fetched per batch of blocks and narrowed to those marketplace
-   contracts and the wallets that started the operations, then matched to each
-   operation by hash. wXTZ transfers are fetched for operations that moved no tez.
+   counter, hash, who started it and which contract it called.
+3. **Payments.** For operations on the marketplace side, the tez that moved in
+   them, fetched per batch of blocks and narrowed to the marketplace contracts
+   and the wallets that started the operations, then matched to each operation by
+   hash. wXTZ transfers are fetched for operations that moved no tez. An operation
+   is on the marketplace side when a contract moved the token (a marketplace,
+   escrow or wrapper - one purchase can pass through several, and money passed
+   between them is not counted twice), or when a wallet called a contract that
+   minted the token for it or moved a token that was not the caller's (an **open
+   edition** sold by the token contract itself). A paid mint is a sale.
 4. **Price.** If the buyer paid the marketplace in the same operation (buying a
    listing), the price is what the buyer paid. Otherwise (accepted offers, settled
    auctions - the money was held in advance) it is what the marketplace paid out.
    When one operation sold several tokens, the price is split by editions.
-5. **Seller.** The wallet the token came from - or, when the marketplace held the
-   token in escrow, the wallet the marketplace paid the most.
+5. **Seller.** The wallet the token came from. For a paid mint (open edition), the
+   work's creator when they were paid - even if they are also the buyer, since an
+   artist minting their own open edition pays themselves. When the marketplace
+   held the token in escrow, whoever it paid the most other than the buyer: a
+   wallet, or the collaboration contract for a collab work. Platform fee
+   contracts are never the seller. Because a collab work's seller is its
+   contract, a collaborator buying a shared work is not reported as a sale
+   within the group.
 
 A token transfer in an operation with no payment is not a sale. Those are kept
 as **token movements** (gifts, moves between own wallets, hand-backs).
 
-**Accuracy check.** For a wallet with about 6,000 sales of its works, the
-reconstructed sales were compared with objkt.com's own sales index: every sale of
-a token with creator metadata was found, the price matched on 99.9% of them, and
-the seller on 99.6% (most differences were sales where objkt names a sale
-contract and the ledger names the artist who was paid).
+**Accuracy check.** For 12 wallets with 10,562 sales of their works between
+them, from a handful of sales to about 6,000, the reconstructed sales were
+compared with objkt.com's own sales index: 98.9% were found, and the price was
+within 3% on 99.1% of those. The ledger also shows sales objkt does not index,
+mostly paid open-edition mints. Most of the rest are Versum sales and collab
+works on older split contracts (see the limits below).
 
-**Limit:** works in collections that do not record a creator in token metadata
-(fxhash generative tokens, some Rarible mints) are not covered.
+**Limits:**
+
+- Works in collections that record neither a creator nor a minter in token
+  metadata (fxhash generative tokens, some Rarible mints) are not covered.
+- Sales on marketplaces that keep the proceeds inside their own contract until
+  the seller withdraws them (Versum) cannot be priced to a seller from the
+  operation alone, and are not counted.
+- A collaboration contract is only found once it has paid the wallet at least
+  once.
 
 ## 6. The patterns
 

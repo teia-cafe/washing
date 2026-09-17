@@ -4,6 +4,7 @@ import { accounts, account, balanceAt, domainsFor, resolveName, transfersFor } f
 import { detect } from "./detect";
 import { shortAddress } from "./format";
 import { discoverLinks } from "./links";
+import { netHealth, resetHealth } from "./net";
 import { worksActivity } from "./sales";
 import type { Account, Finding, LinkedWallet, Progress, Sale, TokenMove, Transfer } from "./types";
 
@@ -18,8 +19,21 @@ export interface Investigation {
   /** Every sale of the group's works, for the price chart. */
   works: Sale[];
   counts: { sales: number; transfers: number; tokenMoves: number };
+  /** How the data service held up; anything above zero failed means the report may be incomplete. */
+  completeness: Completeness;
   generatedAt: string;
 }
+
+export interface Completeness {
+  /** Times the data service asked to slow down or dropped a request. */
+  pushback: number;
+  /** Queries given up on after every retry. */
+  failed: number;
+  /** Parts of the lookup that could not be read at all. */
+  skipped: string[];
+}
+
+export const isIncomplete = (c: Completeness) => c.failed > 0 || c.skipped.length > 0;
 
 const ADDRESS = /^(tz[1-4])[1-9A-HJ-NP-Za-km-z]{33}$/;
 
@@ -35,6 +49,8 @@ export async function resolveInput(input: string): Promise<string> {
 }
 
 export async function investigate(address: string, onProgress: (p: Progress) => void): Promise<Investigation> {
+  resetHealth();
+  const skipped: string[] = [];
   onProgress({ step: "Account" });
   const acc = await account(address);
 
@@ -53,10 +69,18 @@ export async function investigate(address: string, onProgress: (p: Progress) => 
   for (const [i, wallet] of [address, ...extra.map((l) => l.address)].entries()) {
     const label = i === 0 ? "Sales of the works" : `Linked wallet ${i} of ${extra.length}: ${shortAddress(wallet)}`;
     onProgress({ step: label });
-    const [activity, more] = await Promise.all([
+    const read = Promise.all([
       worksActivity(wallet, (p) => onProgress({ step: label, detail: p.detail })),
       i === 0 ? Promise.resolve([] as Transfer[]) : transfersFor(wallet),
     ]);
+    // A linked wallet that cannot be read is left out and reported, rather than losing the whole lookup.
+    const [activity, more] =
+      i === 0
+        ? await read
+        : await read.catch(() => {
+            skipped.push(`sales and transfers of linked wallet ${wallet}`);
+            return [{ sales: [], moves: [] }, [] as Transfer[]] as const;
+          });
     activity.sales.forEach((x) => allSales.set(x.id, x));
     activity.moves.forEach((x) => allMoves.set(x.id, x));
     more.forEach((x) => allTransfers.set(x.id, x));
@@ -82,7 +106,10 @@ export async function investigate(address: string, onProgress: (p: Progress) => 
     involved.add(s.buyer);
     involved.add(s.seller);
   }
-  const info = await accounts([...involved]).catch(() => new Map<string, Account>());
+  const info = await accounts([...involved]).catch(() => {
+    skipped.push("wallet names");
+    return new Map<string, Account>();
+  });
   const names: Record<string, string> = {};
   for (const a of involved) names[a] = info.get(a)?.alias ?? shortAddress(a);
   const name = (a: string) => names[a] ?? shortAddress(a);
@@ -111,6 +138,7 @@ export async function investigate(address: string, onProgress: (p: Progress) => 
     names,
     works,
     counts: { sales: saleList.length, transfers: transferList.length, tokenMoves: tokenMoves.length },
+    completeness: { pushback: netHealth().pushback, failed: netHealth().failed, skipped },
     generatedAt: new Date().toISOString(),
   };
 }

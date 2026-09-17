@@ -37,6 +37,13 @@ export function Method() {
           recorded with each operation. There is no private data and no server of our own - your browser queries TzKT directly,
           a few requests at a time.
         </p>
+        <p>
+          TzKT limits how many requests one visitor or network can make, and a busy wallet takes a few hundred. When TzKT pushes
+          back, the tool pauses, slows down and retries, and tells you it is doing so. If some queries still cannot be completed,
+          the report is marked as possibly incomplete - missing data can mean fewer patterns or wallets grouped differently - and
+          running the lookup again after a few minutes gives fuller results. Queries the report cannot fairly do without, such as
+          the details that keep exchanges from being grouped as the same owner, stop the lookup instead.
+        </p>
       </section>
 
       <section>
@@ -66,14 +73,16 @@ export function Method() {
         <p>
           Tezos has no &quot;sale&quot; record. A sale is an operation in which a marketplace contract moves a token to the buyer
           and pays out tez or wXTZ. For every wallet in the group, the tool takes each transfer of a token whose metadata lists the
-          wallet as a creator, finds the operation it happened in, and fetches the payments in that operation. The price is what
-          the buyer paid the marketplace, or - for accepted offers and settled auctions - what the marketplace paid out. A transfer
-          with no payment is kept as a token movement, not a sale.
+          wallet as a creator or minter - plus works made through a collaboration contract the wallet shares in - finds the
+          operation it happened in, and fetches the payments in that operation. Paid mints of open editions count as sales. The
+          price is what the buyer paid the marketplace, or - for accepted offers and settled auctions - what the marketplace paid
+          out. The seller is the wallet the token came from; for escrowed listings and open editions, the artist (or collab
+          contract) who was paid, never a platform fee wallet. A transfer with no payment is kept as a token movement, not a sale.
         </p>
         <p>
-          Checked against objkt.com&apos;s own index for a wallet with about 6,000 sales: every sale of a token with creator
-          metadata was found, with the price matching on 99.9%. Works without creator metadata (fxhash generative tokens, some
-          Rarible mints) are not covered.
+          Checked against objkt.com&apos;s own index for 12 wallets with 10,562 sales between them: 98.9% were found, with the
+          price within 3% on 99.1% of those. Not covered: works with neither creator nor minter metadata (fxhash generative
+          tokens, some Rarible mints), and sales whose proceeds stay inside the marketplace contract until withdrawn (Versum).
         </p>
       </section>
 

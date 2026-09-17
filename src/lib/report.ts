@@ -4,7 +4,7 @@
 import { opHref, walletHref } from "./api";
 import { KIND_LABEL, STRENGTH_LABEL } from "./detect";
 import { formatDate, formatTez, formatUsd } from "./format";
-import type { Investigation } from "./investigate";
+import { isIncomplete, type Investigation } from "./investigate";
 import type { Finding, Step } from "./types";
 
 const money = (mutez?: number, usd?: number | null) =>
@@ -38,6 +38,12 @@ export function caseReport(inv: Investigation): string {
     `Wallet: [${inv.account.address}](${walletHref(inv.account.address)})`,
     `Generated: ${formatDate(inv.generatedAt)} from the Tezos ledger (TzKT).`,
     `Reviewed: ${inv.counts.sales} sales of the works, ${inv.counts.transfers} direct tez transfers, ${inv.counts.tokenMoves} token movements without payment.`,
+    ...(isIncomplete(inv.completeness)
+      ? [
+          ``,
+          `> **This report may be incomplete.** The public data service (TzKT) limited or dropped requests during the lookup: ${inv.completeness.failed} queries could not be completed${inv.completeness.skipped.length ? `, and these were left out: ${inv.completeness.skipped.join("; ")}` : ""}. Some sales, linked wallets, names or balances may be missing. Run the lookup again later for complete results.`,
+        ]
+      : []),
     ``,
     `## Wallets grouped with it`,
     ...side.map((l) =>

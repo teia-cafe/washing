@@ -116,6 +116,7 @@ export async function discoverLinks(
     }
   }
 
+  // Not optional: without it exchanges and services could be grouped as the same owner, so a failure stops the lookup.
   const info = await accounts([...evidence.keys()]);
   const out: LinkedWallet[] = [
     {

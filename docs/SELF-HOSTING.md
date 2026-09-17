@@ -231,7 +231,10 @@ on your computer (copy `.env.example` as a starting point).
 ### Be kind to TzKT
 
 Every lookup runs in the visitor's browser and queries [TzKT](https://tzkt.io), a
-free service run for the whole Tezos community. The inspector already limits how
-many requests run at once. Please do not remove those limits or automate large
+free service run for the whole Tezos community that limits how many requests one
+visitor can make. The inspector already limits how many requests run at once,
+slows down when TzKT pushes back, and tells visitors when a report may be
+incomplete because of it (see the methodology's "Request limits"). Please do not
+remove those safeguards or automate large
 numbers of lookups; if you need heavy use, look at running your own TzKT
 instance (<https://github.com/baking-bad/tzkt>) and set `VITE_TZKT_API` to it.
