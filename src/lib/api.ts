@@ -4,6 +4,7 @@
 // requests.
 
 import { EXPLORER_BASE, TZKT_BASE } from "@/config";
+import { cached } from "@/lib/cache";
 import { request } from "@/lib/net";
 
 /** Big wallets mean long pages: more patience than a page's usual requests. */
@@ -18,9 +19,14 @@ export class ApiError extends Error {
 }
 
 export async function tzkt<T>(path: string): Promise<T> {
-  const res = await request(`${TZKT_BASE}/${path}`, {}, OPTS);
-  if (!res.ok) throw new ApiError(`TzKT ${res.status} for ${path}`, res.status);
-  return (await res.json()) as T;
+  const url = `${TZKT_BASE}/${path}`;
+  // Answered from the visitor's own cache when they turned it on and it is fresh.
+  const body = await cached(url, async () => {
+    const res = await request(url, {}, OPTS);
+    if (!res.ok) throw new ApiError(`TzKT ${res.status} for ${path}`, res.status);
+    return res.text();
+  });
+  return JSON.parse(body) as T;
 }
 
 /**

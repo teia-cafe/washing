@@ -44,6 +44,12 @@ export function Method() {
           running the lookup again after a few minutes gives fuller results. Queries the report cannot fairly do without, such as
           the details that keep exchanges from being grouped as the same owner, stop the lookup instead.
         </p>
+        <p>
+          To make repeat lookups lighter, the tool can keep the answers in your own browser and reuse them for a day - see
+          &quot;Local data&quot; on the front page or at the end of a report. It is off until you turn it on, you choose how much
+          room it may use, and you can clear it at any time. Nothing is sent anywhere: the stored answers stay on your device, and
+          neither this site nor anyone else receives a copy. A report says how many of its queries came from stored data.
+        </p>
       </section>
 
       <section>

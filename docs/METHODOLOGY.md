@@ -59,6 +59,28 @@ links, but it can also change how wallets are grouped - a wallet that is not
 recognised as the same owner may appear in a different kind of pattern - which
 is why the report says so.
 
+### Storing answers locally
+
+Repeat lookups ask many of the same questions, so the tool can keep the answers
+in the visitor's own browser (IndexedDB) and reuse them. It is **off until the
+visitor turns it on**, under "Local data" on the front page and at the end of
+every report, where they also choose how much room it may use (25, 100 or
+500 MB) and can clear it at any time.
+
+- Nothing is sent anywhere. The answers stay in that browser on that device;
+  neither this site nor anyone else receives a copy, and there is no account and
+  no server to store one.
+- A stored answer is only reused for 24 hours, so a lookup cannot silently miss
+  recent activity. After that it is fetched again.
+- When the space is full, the answers used longest ago are dropped first. A
+  single answer may never take more than a quarter of the space.
+- A report says how many of its queries came from stored data.
+- Turning it off clears what was stored. A browser that refuses storage (a
+  private window, or blocked site data) just carries on without it.
+
+Anyone sharing a computer should clear it, or leave it off, if they would rather
+not leave the wallets they looked up in the browser.
+
 ## 2. The wallet you look up
 
 You enter a `tz1`/`tz2`/`tz3` address or a `.tez` name. A name is resolved to the

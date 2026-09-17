@@ -44,7 +44,9 @@ artists, collectors, curators and marketplaces can all look at the same data.
 
 Everything is read from [TzKT](https://tzkt.io), a free public indexer of the
 Tezos blockchain, directly in the visitor's browser. There is no backend and no
-private data.
+private data. Visitors can optionally let the tool keep the answers in their own
+browser for a day, which makes repeat lookups much faster and lighter on TzKT;
+it is off by default, capped at a size they choose, and clearable at any time.
 
 1. **Group wallets** that appear to share an owner, using `.tez` name ownership,
    "first funded by" links and tez flowing in both directions.

@@ -4,6 +4,7 @@ import { accounts, account, balanceAt, domainsFor, resolveName, transfersFor } f
 import { detect } from "./detect";
 import { shortAddress } from "./format";
 import { discoverLinks } from "./links";
+import { cacheRunStats, resetCacheRunStats } from "./cache";
 import { netHealth, resetHealth } from "./net";
 import { worksActivity } from "./sales";
 import type { Account, Finding, LinkedWallet, Progress, Sale, TokenMove, Transfer } from "./types";
@@ -21,6 +22,8 @@ export interface Investigation {
   counts: { sales: number; transfers: number; tokenMoves: number };
   /** How the data service held up; anything above zero failed means the report may be incomplete. */
   completeness: Completeness;
+  /** Queries answered from the visitor's own cache, and queries made. */
+  cache: { hits: number; misses: number };
   generatedAt: string;
 }
 
@@ -50,6 +53,7 @@ export async function resolveInput(input: string): Promise<string> {
 
 export async function investigate(address: string, onProgress: (p: Progress) => void): Promise<Investigation> {
   resetHealth();
+  resetCacheRunStats();
   const skipped: string[] = [];
   onProgress({ step: "Account" });
   const acc = await account(address);
@@ -139,6 +143,7 @@ export async function investigate(address: string, onProgress: (p: Progress) => 
     works,
     counts: { sales: saleList.length, transfers: transferList.length, tokenMoves: tokenMoves.length },
     completeness: { pushback: netHealth().pushback, failed: netHealth().failed, skipped },
+    cache: cacheRunStats(),
     generatedAt: new Date().toISOString(),
   };
 }

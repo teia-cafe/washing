@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FindingCard } from "./FindingCard";
 import { IncompleteNotice, LimitedError, SlowingDown } from "./Limits";
+import { LocalData } from "./LocalData";
 import { LinkedWallets } from "./LinkedWallets";
 import { Notice } from "./Notice";
 import { PriceChart } from "./PriceChart";
@@ -172,6 +173,7 @@ function Intro() {
       <p className="muted">
         Exactly how each pattern is detected, and what the tool cannot see, is on the <a href="#/methodology">Methodology</a> page.
       </p>
+      <LocalData />
     </section>
   );
 }
@@ -306,6 +308,9 @@ function Report({ inv, retryAt, onRetry }: { inv: Investigation; retryAt: number
       <p className="coverage">
         {`Reviewed ${inv.counts.sales.toLocaleString("en-US")} sales of the group's works, ` +
           `${inv.counts.transfers.toLocaleString("en-US")} direct tez transfers and ${inv.counts.tokenMoves.toLocaleString("en-US")} token movements without payment · ${formatDate(inv.generatedAt)}`}
+        {inv.cache.hits > 0
+          ? ` · ${inv.cache.hits.toLocaleString("en-US")} of ${(inv.cache.hits + inv.cache.misses).toLocaleString("en-US")} queries came from data stored in this browser, up to a day old`
+          : ""}
       </p>
 
       <nav className="nav" aria-label="Sections">
@@ -403,6 +408,7 @@ function Report({ inv, retryAt, onRetry }: { inv: Investigation; retryAt: number
             <a href="#/about">About</a>.
           </p>
         </div>
+        <LocalData />
       </section>
     </>
   );

@@ -277,6 +277,77 @@
   }
 }
 
+.wti .local-data {
+  margin: 40px 0 8px;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  max-width: 760px;
+}
+
+.wti .local-data h2 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.wti .local-data p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.wti .local-data-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+}
+
+.wti .switch {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.wti .switch input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.wti .field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.wti .field select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.wti .field select:disabled,
+.wti .switch input:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wti .local-data-status {
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+
 .wti .limit-note {
   margin: 14px 0 4px;
   padding: 10px 14px;
