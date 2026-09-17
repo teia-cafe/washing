@@ -91,13 +91,13 @@ Settings are build-time environment variables; see `.env.example` and
 | `src/lib/detect.test.ts` | Tests pinning each rule |
 | `src/lib/investigate.ts` | One lookup, start to finish |
 | `src/components/` | The interface, About, Methodology and hosting pages |
-| `.github/workflows/` | CI, GitHub Pages (for forks), teia.cafe's Cloudflare deploy |
+| `.github/workflows/` | CI, and GitHub Pages for forks |
 
 ## Deployment (teia.cafe)
 
-`washing.teia.cafe` is deployed to Cloudflare by `.github/workflows/deploy.yml`
-using `wrangler.jsonc`, once a `CLOUDFLARE_API_TOKEN` secret is set on the
-repository. Forks skip that workflow and use `pages.yml` instead.
+`washing.teia.cafe` is built and deployed by Cloudflare Workers Builds, which is
+connected to this repository and redeploys on every push to `main`, using
+`wrangler.jsonc`. Forks don't need that file; they use `pages.yml` instead.
 
 ## Contributing
 
