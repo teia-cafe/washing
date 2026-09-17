@@ -224,7 +224,6 @@ on your computer (copy `.env.example` as a starting point).
 |---|---|---|
 | `VITE_SITE_NAME` | Name shown in the header and footer | `teia.cafe` |
 | `VITE_SOURCE_URL` | Source code link in the footer | the teia-cafe repository |
-| `VITE_ACCESS_PASSWORD` | Shows a simple password prompt before the tool. **Not security**: the password is readable in the built site. | none |
 | `VITE_TZKT_API` | TzKT API to read from (e.g. a test network) | `https://api.tzkt.io/v1` |
 | `VITE_EXPLORER` | Where operation and wallet links point | `https://tzkt.io` |
 | `BASE_PATH` | Sub-path the site is served from. The GitHub Pages workflow sets this for you. | `/` |

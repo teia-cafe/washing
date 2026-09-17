@@ -37,7 +37,6 @@ jobs:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}/
           VITE_SITE_NAME: ${{ vars.VITE_SITE_NAME || github.repository_owner }}
           VITE_SOURCE_URL: ${{ vars.VITE_SOURCE_URL || format('{0}/{1}', github.server_url, github.repository) }}
-          VITE_ACCESS_PASSWORD: ${{ vars.VITE_ACCESS_PASSWORD }}
           VITE_TZKT_API: ${{ vars.VITE_TZKT_API }}
           VITE_EXPLORER: ${{ vars.VITE_EXPLORER }}
       - uses: actions/upload-pages-artifact@v3

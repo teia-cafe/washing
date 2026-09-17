@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { About } from "@/components/About";
 import { HostYourOwn } from "@/components/HostYourOwn";
 import { Method } from "@/components/Method";
-import { PasswordGate } from "@/components/PasswordGate";
 import { WashTradeInspector } from "@/components/WashTradeInspector";
 import { SITE_NAME, SOURCE_URL } from "@/config";
 
@@ -67,17 +66,15 @@ export function App() {
         </div>
       </header>
 
-      <PasswordGate>
-        {/* Kept mounted while reading other pages, so a lookup in progress is not lost. */}
-        <div hidden={route !== "inspector"}>
-          <WashTradeInspector />
-        </div>
-        <main className="page-wrap" hidden={route === "inspector"}>
-          {route === "about" ? <About /> : null}
-          {route === "methodology" ? <Method /> : null}
-          {route === "host" ? <HostYourOwn /> : null}
-        </main>
-      </PasswordGate>
+      {/* Kept mounted while reading other pages, so a lookup in progress is not lost. */}
+      <div hidden={route !== "inspector"}>
+        <WashTradeInspector />
+      </div>
+      <main className="page-wrap" hidden={route === "inspector"}>
+        {route === "about" ? <About /> : null}
+        {route === "methodology" ? <Method /> : null}
+        {route === "host" ? <HostYourOwn /> : null}
+      </main>
 
       <footer className="site-footer">
         <div className="site-footer-inner">
