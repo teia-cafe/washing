@@ -1,0 +1,39 @@
+# teia.cafe's own deployment: washing.teia.cafe on Cloudflare (wrangler.jsonc).
+# Runs only in the original repository, and only once the CLOUDFLARE_API_TOKEN
+# secret has been added. Forks use pages.yml instead.
+
+name: Deploy washing.teia.cafe
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.repository == 'teia-cafe/washing'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_ACCESS_PASSWORD: ${{ vars.VITE_ACCESS_PASSWORD }}
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "No CLOUDFLARE_API_TOKEN secret yet - skipping deploy."
+            exit 0
+          fi
+          npx wrangler@4 deploy

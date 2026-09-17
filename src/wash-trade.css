@@ -1,0 +1,852 @@
+/* Trade patterns lookup (/wash-trade-inspector). Everything is scoped under .wti
+   so the tool's styles and the site's never meet. The site is always dark,
+   so only the dark palette is used. */
+
+.wti {
+    color-scheme: dark;
+    --bg: #000000;
+    --surface: #1a1a19;
+    --surface-2: #232321;
+    --line: #34332f;
+    --text: #ffffff;
+    --text-2: #c3c2b7;
+    --text-3: #9b9a92;
+    --accent: #86b6ef;
+    --series-regular: #3987e5;
+    --series-flagged: #d95926;
+    --critical: #e66767;
+    --critical-bg: #3a1c1b;
+    --serious: #ec835a;
+    --serious-bg: #3a261c;
+    --neutral-bg: #2a2a27;
+    --focus: #86b6ef;
+  
+    --sans: var(--font-grotesk), system-ui, sans-serif;
+    --mono: var(--font-jb), ui-monospace, Menlo, monospace;
+}
+
+.wti * {
+  box-sizing: border-box;
+}
+
+.wti {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wti a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+.wti :focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.wti button {
+  font: inherit;
+}
+
+.wti .mono {
+  font-family: var(--mono);
+  font-size: 0.86em;
+}
+
+.wti .muted {
+  color: var(--text-2);
+}
+
+.wti .faint {
+  color: var(--text-3);
+}
+
+.wti .shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+.wti .topbar {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.wti .topbar-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+}
+
+.wti .brand {
+  display: flex;
+  flex-direction: column;
+  margin-right: auto;
+}
+
+.wti .brand strong {
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.wti .brand span {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.wti .search {
+  display: flex;
+  gap: 8px;
+  flex: 1 1 420px;
+  max-width: 620px;
+}
+
+.wti .search input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.wti .wti-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--text);
+  color: var(--surface);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wti .wti-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.wti .btn-quiet {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.wti .btn-quiet:hover {
+  background: var(--surface-2);
+}
+
+.wti .link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: inherit;
+}
+
+.wti .section {
+  margin-top: 40px;
+  scroll-margin-top: 16px;
+}
+
+.wti .section > h2 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  margin: 0 0 4px;
+}
+
+.wti .section > .section-lede {
+  margin: 0 0 14px;
+  color: var(--text-2);
+  font-size: 14px;
+  max-width: 760px;
+}
+
+.wti .panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.wti .intro {
+  margin-top: 48px;
+  max-width: 760px;
+}
+
+.wti .intro h1 {
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+}
+
+.wti .intro p {
+  color: var(--text-2);
+  margin: 0 0 14px;
+}
+
+.wti .patterns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wti .patterns li {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.wti .patterns strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.wti .patterns span {
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.wti .progress {
+  margin-top: 40px;
+}
+
+.wti .progress ol {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 6px;
+}
+
+.wti .progress li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.wti .progress li::before {
+  content: "✓";
+  color: var(--text-3);
+  width: 14px;
+}
+
+.wti .progress li.current::before {
+  content: "•";
+  color: var(--accent);
+  animation: wti-pulse 1s ease-in-out infinite;
+}
+
+@keyframes wti-pulse {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wti .progress li.current::before {
+    animation: none;
+  }
+}
+
+.wti .error {
+  margin-top: 32px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--critical-bg);
+  border: 1px solid var(--critical);
+}
+
+.wti .case {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.wti .case h1 {
+  font-size: clamp(24px, 3.5vw, 32px);
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.wti .case .address {
+  word-break: break-all;
+}
+
+.wti .case-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wti .stats {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.wti .stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.wti .stat-value {
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.wti .stat-label {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.wti .stat-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.wti .coverage {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.wti .nav {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  margin-top: 24px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.wti .nav a {
+  color: var(--text-2);
+  text-decoration: none;
+}
+
+.wti .nav a:hover {
+  color: var(--text);
+}
+
+.wti .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.wti .badge-definitive {
+  background: var(--critical-bg);
+  color: var(--critical);
+  border-color: var(--critical);
+}
+
+.wti .badge-strong {
+  background: var(--serious-bg);
+  color: var(--serious);
+  border-color: var(--serious);
+}
+
+.wti .badge-supporting {
+  background: var(--neutral-bg);
+  color: var(--text-2);
+  border-color: var(--line);
+}
+
+.wti .badge-kind {
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.wti .badge-role-same-controller {
+  background: var(--serious-bg);
+  color: var(--serious);
+  border-color: var(--serious);
+}
+
+.wti .badge-role-investigated {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.wti .badge-role-associate {
+  background: var(--neutral-bg);
+  color: var(--text-2);
+}
+
+.wti .filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.wti .filters-label {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-right: 2px;
+}
+
+.wti .chip {
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.wti .chip[aria-pressed="true"] {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--surface);
+}
+
+.wti .findings {
+  display: grid;
+  gap: 12px;
+}
+
+.wti .finding {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  scroll-margin-top: 16px;
+}
+
+.wti .finding.highlight {
+  box-shadow: 0 0 0 2px var(--series-flagged);
+}
+
+.wti .finding-head {
+  padding: 16px 18px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 16px;
+}
+
+.wti .finding-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.wti .finding-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.wti .finding-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.wti .finding-value strong {
+  display: block;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.wti .finding-body {
+  padding: 8px 18px 14px;
+}
+
+.wti .finding-summary {
+  margin: 0;
+  color: var(--text-2);
+}
+
+.wti .price-context {
+  margin-top: 10px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--text-2);
+}
+
+.wti .ratio-bar {
+  position: relative;
+  height: 6px;
+  width: 140px;
+  background: var(--surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.wti .ratio-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--series-flagged);
+}
+
+.wti .ratio-bar b {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--text-2);
+}
+
+.wti .steps {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.wti .step {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line);
+  align-items: start;
+  font-size: 14px;
+}
+
+.wti .step:last-child {
+  border-bottom: none;
+}
+
+.wti .step-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.wti .step-time {
+  display: block;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.wti .step-amount {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.wti .step-amount small {
+  display: block;
+  color: var(--text-3);
+}
+
+.wti .step-link {
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.wti .finding-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 18px;
+  background: var(--surface-2);
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.wti .toggle-steps {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+@media (max-width: 560px) {
+  .wti .finding-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wti .finding-value {
+    text-align: left;
+  }
+  .wti .step {
+    grid-template-columns: 26px minmax(0, 1fr);
+  }
+  .wti .step-amount {
+    grid-column: 2;
+    text-align: left;
+  }
+}
+
+.wti .chart-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.wti .legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.wti .legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wti .legend i {
+  display: inline-block;
+  border-radius: 50%;
+}
+
+.wti .chart {
+  position: relative;
+}
+
+.wti .chart svg {
+  display: block;
+  width: 100%;
+  touch-action: none;
+}
+
+.wti .chart .axis text {
+  fill: var(--text-3);
+  font-size: 11px;
+  font-family: var(--sans);
+}
+
+.wti .chart .grid line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.wti .tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.12);
+  width: max-content;
+  max-width: 260px;
+  z-index: 2;
+  color: var(--text-2);
+}
+
+.wti .tooltip strong {
+  display: block;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.wti .wallets {
+  display: grid;
+  gap: 12px;
+}
+
+.wti .wallet {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+
+.wti .wallet-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.wti .wallet-name {
+  font-weight: 650;
+  margin-right: 8px;
+}
+
+.wti .wallet-flows {
+  font-size: 13px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.wti .wallet ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.wti .wallet li + li {
+  margin-top: 3px;
+}
+
+.wti .associates {
+  margin-top: 14px;
+}
+
+.wti .associates summary {
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.wti .table-wrap {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.wti table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.wti th, .wti td {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.wti th {
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.wti td.num, .wti th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.wti .method {
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.wti .method h3 {
+  color: var(--text);
+  font-size: 15px;
+  margin: 18px 0 6px;
+}
+
+.wti .method h3:first-child {
+  margin-top: 0;
+}
+
+.wti .method p, .wti .method ul {
+  margin: 0 0 8px;
+}
+
+.wti .method li + li {
+  margin-top: 4px;
+}
+
+.wti .gate {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 96px 20px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wti .gate h1 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.wti .gate p {
+  margin: 0 0 10px;
+}
+
+.wti .gate label {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.wti .gate input {
+  padding: 11px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.wti .gate .wti-btn {
+  margin-top: 6px;
+}
+
+.wti .gate-error {
+  color: var(--critical);
+  font-size: 14px;
+}

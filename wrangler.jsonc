@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // teia.cafe's own copy of the inspector. Static files only (./dist); no
+  // Worker code runs. Self-hosted copies do not need this file.
+  "name": "teia-cafe-washing",
+  "compatibility_date": "2026-08-01",
+  "account_id": "479e97d9a333bd3731497e2ff22b0079",
+  "assets": {
+    "directory": "./dist"
+  },
+  "routes": [{ "pattern": "washing.teia.cafe", "custom_domain": true }]
+}

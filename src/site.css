@@ -1,0 +1,186 @@
+/* The site around the inspector: fonts, header, footer, and the text pages.
+   Colours and the inspector's own styles are in wash-trade.css. */
+
+:root {
+  --font-grotesk: "Schibsted Grotesk";
+  --font-jb: "JetBrains Mono";
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  background: #000;
+}
+
+.wti {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.wti [hidden] {
+  display: none !important;
+}
+
+.wti .site-header {
+  border-bottom: 1px solid var(--line);
+}
+
+.wti .site-header-inner,
+.wti .site-footer-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 24px;
+}
+
+.wti .site-brand {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.wti .site-brand span {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.wti .site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 14px;
+}
+
+.wti .site-nav a {
+  color: var(--text-2);
+  text-decoration: none;
+  padding: 2px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.wti .site-nav a:hover {
+  color: var(--text);
+}
+
+.wti .site-nav a[aria-current="page"] {
+  color: var(--text);
+  border-bottom-color: #ffb638;
+}
+
+.wti .site-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.wti .site-footer-inner {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-block: 20px;
+}
+
+.wti .site-footer p {
+  margin: 0;
+  max-width: 820px;
+}
+
+/* Notice ------------------------------------------------------------------ */
+
+.wti .notice {
+  display: block;
+  margin: 18px 0;
+  padding: 12px 16px;
+  border: 1px solid #6b5423;
+  border-left: 3px solid #ffb638;
+  border-radius: 8px;
+  background: #16120a;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.wti .notice strong {
+  color: var(--text);
+}
+
+/* Text pages --------------------------------------------------------------- */
+
+.wti .page-wrap {
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 8px 20px 80px;
+  box-sizing: border-box;
+}
+
+.wti .page h1 {
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 36px 0 12px;
+}
+
+.wti .page h2 {
+  font-size: 18px;
+  margin: 32px 0 8px;
+}
+
+.wti .page p,
+.wti .page li {
+  color: var(--text-2);
+  line-height: 1.65;
+}
+
+.wti .page li + li {
+  margin-top: 8px;
+}
+
+.wti .page strong {
+  color: var(--text);
+}
+
+.wti .lede {
+  font-size: 16px;
+  color: var(--text-2);
+}
+
+.wti .page .disclaimer {
+  margin-top: 32px;
+  padding: 4px 20px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.wti .page code,
+.wti .page pre {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.wti .page pre {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+
+.wti .intro h2 {
+  font-size: 17px;
+  margin: 28px 0 8px;
+}
